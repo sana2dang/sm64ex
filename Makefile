@@ -169,7 +169,7 @@ ifeq ($(GRUCODE),f3d_new) # Fast3D 2.0H (Shindou)
   TARGET := $(TARGET).f3d_new
   COMPARE := 0
 else
-ifeq ($(GRUCODE),f3dzex) # Fast3DZEX (2.0J / Animal Forest - Dōbutsu no Mori)
+ifeq ($(GRUCODE),f3dzex) # Fast3DZEX (2.0J / Animal Forest - DÅbutsu no Mori)
   $(warning Fast3DZEX is experimental. Try at your own risk.)
   GRUCODE_DEF := F3DEX_GBI_2
   GRUCODE_ASFLAGS := --defsym F3DEX_GBI_SHARED=1
@@ -185,7 +185,7 @@ GRUCODE_CFLAGS := -D$(GRUCODE_DEF)
 GRUCODE_ASFLAGS := $(GRUCODE_ASFLAGS) --defsym $(GRUCODE_DEF)=1
 
 # Default build is for PC now
-VERSION_CFLAGS := $(VERSION_CFLAGS) -DNON_MATCHING -DAVOID_UB
+VERSION_CFLAGS := $(VERSION_CFLAGS) -DNON_MATCHING -DAVOID_UB -DUSE_GLES
 
 ifeq ($(TARGET_RPI),1) # Define RPi to change SDL2 title & GLES2 hints
       VERSION_CFLAGS += -DUSE_GLES
@@ -346,6 +346,8 @@ ifeq ($(TARGET_RPI),1)
         endif
 endif
 
+OPT_FLAGS := -march=armv8-a+crc+simd -mtune=cortex-a35 -mcpu=cortex-a35 -O3
+
 # File dependencies and variables for specific files
 include Makefile.split
 
@@ -500,7 +502,7 @@ else ifeq ($(WINDOW_API),SDL2)
   else ifeq ($(OSX_BUILD),1)
     BACKEND_LDFLAGS += -framework OpenGL `pkg-config --libs glew`
   else
-    BACKEND_LDFLAGS += -lGL
+    BACKEND_LDFLAGS += -lGLESv2
   endif
   SDL_USED := 2
 endif
@@ -624,7 +626,8 @@ else ifeq ($(OSX_BUILD),1)
   LDFLAGS := -lm $(BACKEND_LDFLAGS) -no-pie -lpthread
 
 else
-  LDFLAGS := $(BITS) -march=$(TARGET_ARCH) -lm $(BACKEND_LDFLAGS) -no-pie -lpthread
+  LDFLAGS := $(OPT_FLAGS) -lm $(BACKEND_LDFLAGS) -no-pie
+  # LDFLAGS := $(BITS) -march=$(TARGET_ARCH) -lm $(BACKEND_LDFLAGS) -no-pie -lpthread
   ifeq ($(DISCORDRPC),1)
     LDFLAGS += -ldl -Wl,-rpath .
   endif
